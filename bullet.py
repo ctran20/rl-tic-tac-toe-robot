@@ -1,4 +1,5 @@
 from struct import pack
+from turtle import position
 import pybullet as p
 import time
 import pybullet_data
@@ -12,13 +13,29 @@ planeId = p.loadURDF("plane.urdf")
 table_a = p.loadURDF("table/table.urdf",[0,0,0])
 tray_a = p.loadURDF("tray/traybox.urdf",[0.5,0.7,0.65])
 tray_b = p.loadURDF("tray/traybox.urdf",[-0.5,-0.7,0.65])
-arm_b = p.loadURDF("franka_panda/panda.urdf",[-0.6,0,0.65], p.getQuaternionFromEuler([0,0,0]), useFixedBase=1)
+arm_a = p.loadURDF("franka_panda/panda.urdf",[-0.6,0,0.65], p.getQuaternionFromEuler([0,0,0]), useFixedBase=1)
 arm_b  = p.loadURDF("franka_panda/panda.urdf",[0.6,0,0.65], p.getQuaternionFromEuler([0,0,3]), useFixedBase=1)
 
+joint_nums = p.getNumJoints(arm_a)
+# position, orientation = p.getBasePositionAndOrientation(arm_a)
+# p.getJointInfo(arm_a, 7)
+
+p.setRealTimeSimulation(0)
+p.setJointMotorControlArray(arm_a, range(1), p.POSITION_CONTROL,
+targetPositions=[1]*1)
+p.setJointMotorControlArray(arm_a, range(2), p.POSITION_CONTROL,
+targetPositions=[1]*2)
+
+p.setJointMotorControlArray(arm_b, range(1), p.POSITION_CONTROL,
+targetPositions=[1]*1)
+p.setJointMotorControlArray(arm_b, range(7), p.POSITION_CONTROL,
+targetPositions=[1]*7)
+
 #set the center of mass frame (loadURDF sets base link frame) startPos/Ornp.resetBasePositionAndOrientation(boxId, startPos, startOrientation)
-for i in range (10000):
+for _ in range (300):
+    print('A')
     p.stepSimulation()
     time.sleep(1./240.)
-cubePos, cubeOrn = p.getBasePositionAndOrientation(arm)
+cubePos, cubeOrn = p.getBasePositionAndOrientation(arm_a)
 print(cubePos,cubeOrn)
 p.disconnect()
