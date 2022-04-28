@@ -30,12 +30,22 @@ p.setGravity(0,0,-9.81)
 
 # Load Models [x, y ,z]
 planeId = p.loadURDF("plane.urdf")
-p.loadURDF("cube_small.urdf",[-0.49,-0.76,0.72])
+#p.loadURDF("cube_small.urdf",[-0.49,-0.76,0.72])
+o_cube = p.loadURDF("cube_small.urdf",[-0.49,-0.76,0.73])
+x_cube = p.loadURDF("cube_small.urdf",[-0.49,-0.90,0.73])
+x_cube = p.loadURDF("cube_small.urdf",[-0.49,-0.83,0.73])
+x_cube = p.loadURDF("cube_small.urdf",[-0.49,-0.69,0.73])
+x_cube = p.loadURDF("cube_small.urdf",[-0.49,-0.62,0.73])
+o_text = p.loadTexture("play_cubes/o_cube.png")
+x_text = p.loadTexture("play_cubes/x_cube.png")
+
+p.changeVisualShape(o_cube, -1, textureUniqueId=o_text)
+p.changeVisualShape(x_cube, -1, textureUniqueId=x_text)
 
 table_a = p.loadURDF("table/table.urdf",[0,0,0])
-table_b = p.loadURDF("tablee/table_square.urdf",[0,0,0])
-tray_a = p.loadURDF("tray/traybox.urdf",[0.5,0.7,0.69])
-tray_b = p.loadURDF("tray/traybox.urdf",[-0.5,-0.7,0.69])
+table_b = p.loadURDF("tic_tac_toe_board/table_square.urdf",[0,0,0])
+tray_a = p.loadURDF("tray/traybox.urdf",[0.5,0.75,0.69])
+tray_b = p.loadURDF("tray/traybox.urdf",[-0.5,-0.75,0.69])
 arm_a = p.loadURDF("franka_panda/panda.urdf",[-0.55,0,0.65], p.getQuaternionFromEuler([0,0,0]), useFixedBase=1)
 arm_b  = p.loadURDF("franka_panda/panda.urdf",[0.55,0,0.65], p.getQuaternionFromEuler([0,0,3]), useFixedBase=1)
 
@@ -48,59 +58,56 @@ joint_nums = p.getNumJoints(arm_a)
 
 box_6 = [0, 1.1, 0,-1.15, 0, 2.25, 0.8]
 # pere = p.calculateInverseKinematics(arm_a, 7, [0.1,0.1,0.4])
+trayPrep    = [-1.5, 1, 0,-1.2, 0, 2.2, 0.8]
 pickedUp     = [-1.5, 1, 0,-0.8, 0, 1.8, 0.8]
 base_p1     = [-1.0, 1, 0,-0.8, 0, 1.8, 0.8]
 base_p2     = [-0.5, 1, 0,-0.8, 0, 1.8, 0.8]
 main_base    = [0, 1, 0,-0.8, 0, 1.8, 0.8]
-trayPrep    = [-1.5, 1, 0,-1.2, 0, 2.2, 0.8]
-trayGrab    = [-1.5, 1, 0,-1.25, 0, 2.25, 0.8]
 
 quick = 60
-slow = 120
+slow = 100
 p.setRealTimeSimulation(0)
+# Calculate and move arm up after pick up
 #p.setJointMotorControl2(arm_a, 1, p.POSITION_CONTROL, targetPosition=0.5)
-
-resetPos(arm_a)
-stepSim(quick)
-
-p.setJointMotorControlArray(arm_a, range(7), p.POSITION_CONTROL, targetPositions=[1]*7)
-p.setJointMotorControlArray(arm_a, range(joint_nums-5), p.POSITION_CONTROL,
-targetPositions=trayPrep)
 
 p.setJointMotorControlArray(arm_b, range(joint_nums), p.POSITION_CONTROL,
 targetPositions=[1]*joint_nums)
 p.setJointMotorControl2(arm_b, 3, p.POSITION_CONTROL, targetPosition=-2)
+
+resetPos(arm_a)
+stepSim(quick)
+move_arm(arm_a, trayPrep)
 
 stepSim(quick)
 
 grab(arm_a)
 stepSim(quick)
 
-p.setJointMotorControlArray(arm_a, range(joint_nums-5), p.POSITION_CONTROL,
-targetPositions=pickedUp)
+move_arm(arm_a, pickedUp)
 stepSim(slow)
 
-p.setJointMotorControlArray(arm_a, range(joint_nums-5), p.POSITION_CONTROL,
-targetPositions=base_p1)
+move_arm(arm_a, base_p1)
 stepSim(slow)
 
-p.setJointMotorControlArray(arm_a, range(joint_nums-5), p.POSITION_CONTROL,
-targetPositions=base_p2)
+move_arm(arm_a, base_p2)
 stepSim(slow)
 
-p.setJointMotorControlArray(arm_a, range(joint_nums-5), p.POSITION_CONTROL,
-targetPositions=main_base)
+move_arm(arm_a, main_base)
 stepSim(slow)
 
-p.setJointMotorControlArray(arm_a, range(joint_nums-5), p.POSITION_CONTROL,
-targetPositions=box_6)
+move_arm(arm_a, box_6)
 stepSim(slow)
 
 release(arm_a)
 stepSim(quick)
 
+move_arm(arm_a, main_base)
+stepSim(quick)
+
 resetPos(arm_a)
 stepSim(quick)
+
+p.getCameraImage(400,400,renderer=p.ER_TINY_RENDERER)
 
 cubePos, cubeOrn = p.getBasePositionAndOrientation(arm_a)
 print(cubePos,cubeOrn)
