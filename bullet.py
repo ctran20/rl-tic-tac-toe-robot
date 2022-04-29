@@ -107,7 +107,18 @@ stepSim(quick)
 resetPos(arm_a)
 stepSim(quick)
 
-p.getCameraImage(400,400,renderer=p.ER_TINY_RENDERER)
+viewMatrix = p.computeViewMatrix(
+    cameraEyePosition=[0, 0, 3],
+    cameraTargetPosition=[0, 0, 0],
+    cameraUpVector=[0, 1, 0])
+
+projectionMatrix = p.computeProjectionMatrixFOV(
+    fov=45.0,
+    aspect=1.0,
+    nearVal=0.1,
+    farVal=3.1)
+
+p.getCameraImage(400,400,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
 
 cubePos, cubeOrn = p.getBasePositionAndOrientation(arm_a)
 print(cubePos,cubeOrn)
