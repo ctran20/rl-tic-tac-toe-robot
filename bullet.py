@@ -10,8 +10,8 @@ def stepSim(steps):
         time.sleep(0.01)
 
 def grab(arm):
-    p.setJointMotorControl2(arm, 10, p.POSITION_CONTROL,targetPosition=0.02, force=50)
-    p.setJointMotorControl2(arm, 9, p.POSITION_CONTROL,targetPosition=0.02, force=50)
+    p.setJointMotorControl2(arm, 10, p.POSITION_CONTROL,targetPosition=0.02, force=60)
+    p.setJointMotorControl2(arm, 9, p.POSITION_CONTROL,targetPosition=0.02, force=60)
 
 def release(arm):
     p.setJointMotorControl2(arm, 10, p.POSITION_CONTROL,targetPosition=1.5)
@@ -24,28 +24,34 @@ def resetPos(arm):
 def move_arm(arm, pos):
     p.setJointMotorControlArray(arm, range(7), p.POSITION_CONTROL,targetPositions=pos)
 
+def load_cubes():
+    incr = 0
+    x_cube = [0]*5
+    o_cube = [0]*5
+    x_text = p.loadTexture("play_cubes/x_cube.png")
+    o_text = p.loadTexture("play_cubes/o_cube.png")
+
+    for i in range(5):
+        x_cube[i] = p.loadURDF("cube_small.urdf",[-0.49,-0.55 - incr,0.73])
+        o_cube[i] = p.loadURDF("cube_small.urdf",[0.49,0.55 + incr,0.73])
+        incr += 0.07
+        p.changeVisualShape(o_cube[i], -1, textureUniqueId=o_text)
+        p.changeVisualShape(x_cube[i], -1, textureUniqueId=x_text)
+
+
 physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
 p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 p.setGravity(0,0,-9.81)
+load_cubes()
 
 # Load Models [x, y ,z]
 planeId = p.loadURDF("plane.urdf")
 #p.loadURDF("cube_small.urdf",[-0.49,-0.76,0.72])
-o_cube = p.loadURDF("cube_small.urdf",[-0.49,-0.76,0.73])
-x_cube = p.loadURDF("cube_small.urdf",[-0.49,-0.90,0.73])
-x_cube = p.loadURDF("cube_small.urdf",[-0.49,-0.83,0.73])
-x_cube = p.loadURDF("cube_small.urdf",[-0.49,-0.69,0.73])
-x_cube = p.loadURDF("cube_small.urdf",[-0.49,-0.62,0.73])
-o_text = p.loadTexture("play_cubes/o_cube.png")
-x_text = p.loadTexture("play_cubes/x_cube.png")
-
-p.changeVisualShape(o_cube, -1, textureUniqueId=o_text)
-p.changeVisualShape(x_cube, -1, textureUniqueId=x_text)
 
 table_a = p.loadURDF("table/table.urdf",[0,0,0])
-table_b = p.loadURDF("tic_tac_toe_board/table_square.urdf",[0,0,0])
-tray_a = p.loadURDF("tray/traybox.urdf",[0.5,0.75,0.69])
-tray_b = p.loadURDF("tray/traybox.urdf",[-0.5,-0.75,0.69])
+table_b = p.loadURDF("tic_tac_toe_board/table_square.urdf",[0,0.005,0])
+tray_a = p.loadURDF("tray/traybox.urdf",[0.5,0.68,0.69])
+tray_b = p.loadURDF("tray/traybox.urdf",[-0.5,-0.68,0.69])
 arm_a = p.loadURDF("franka_panda/panda.urdf",[-0.55,0,0.65], p.getQuaternionFromEuler([0,0,0]), useFixedBase=1)
 arm_b  = p.loadURDF("franka_panda/panda.urdf",[0.55,0,0.65], p.getQuaternionFromEuler([0,0,3]), useFixedBase=1)
 
@@ -56,13 +62,14 @@ joint_nums = p.getNumJoints(arm_a)
 #                  B E1  3 E2  5    H   W  X  X  R  L  
 #startingPos = [-1.5, 1, 0, 0, 0, 1.8,0.8, 0, 0, 1, 1]
 
+box_5 = [0, 0.5, 0,-2.3, 0, 2.8, 0.8]
 box_6 = [0, 1.1, 0,-1.15, 0, 2.25, 0.8]
 # pere = p.calculateInverseKinematics(arm_a, 7, [0.1,0.1,0.4])
 trayPrep    = [-1.5, 1, 0,-1.2, 0, 2.2, 0.8]
 pickedUp     = [-1.5, 1, 0,-0.8, 0, 1.8, 0.8]
 base_p1     = [-1.0, 1, 0,-0.8, 0, 1.8, 0.8]
 base_p2     = [-0.5, 1, 0,-0.8, 0, 1.8, 0.8]
-main_base    = [0, 1, 0,-0.8, 0, 1.8, 0.8]
+main_base    = [0, 1, 0,-1.2, 0, 2.2, 0.8]
 
 quick = 60
 slow = 100
@@ -95,7 +102,7 @@ stepSim(slow)
 move_arm(arm_a, main_base)
 stepSim(slow)
 
-move_arm(arm_a, box_6)
+move_arm(arm_a, box_5)
 stepSim(slow)
 
 release(arm_a)
@@ -108,7 +115,7 @@ resetPos(arm_a)
 stepSim(quick)
 
 viewMatrix = p.computeViewMatrix(
-    cameraEyePosition=[0, 0, 3],
+    cameraEyePosition=[0, 0, 1.4],
     cameraTargetPosition=[0, 0, 0],
     cameraUpVector=[0, 1, 0])
 
@@ -118,7 +125,7 @@ projectionMatrix = p.computeProjectionMatrixFOV(
     nearVal=0.1,
     farVal=3.1)
 
-p.getCameraImage(400,400,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
+p.getCameraImage(300,300,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
 
 cubePos, cubeOrn = p.getBasePositionAndOrientation(arm_a)
 print(cubePos,cubeOrn)
