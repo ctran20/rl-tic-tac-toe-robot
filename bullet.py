@@ -10,8 +10,8 @@ def stepSim(steps):
         time.sleep(0.01)
 
 def grab(arm):
-    p.setJointMotorControl2(arm, 10, p.POSITION_CONTROL,targetPosition=0.02, force=60)
-    p.setJointMotorControl2(arm, 9, p.POSITION_CONTROL,targetPosition=0.02, force=60)
+    p.setJointMotorControl2(arm, 10, p.POSITION_CONTROL,targetPosition=0.019, force=60)
+    p.setJointMotorControl2(arm, 9, p.POSITION_CONTROL,targetPosition=0.019, force=60)
 
 def release(arm):
     p.setJointMotorControl2(arm, 10, p.POSITION_CONTROL,targetPosition=1.5)
@@ -32,8 +32,8 @@ def load_cubes():
     o_text = p.loadTexture("play_cubes/o_cube.png")
 
     for i in range(5):
-        x_cube[i] = p.loadURDF("cube_small.urdf",[-0.49,-0.55 - incr,0.73])
-        o_cube[i] = p.loadURDF("cube_small.urdf",[0.49,0.55 + incr,0.73])
+        x_cube[i] = p.loadURDF("cube_small.urdf",[-0.49,-0.54 - incr,0.73])
+        o_cube[i] = p.loadURDF("cube_small.urdf",[0.49,0.54 + incr,0.73])
         incr += 0.07
         p.changeVisualShape(o_cube[i], -1, textureUniqueId=o_text)
         p.changeVisualShape(x_cube[i], -1, textureUniqueId=x_text)
@@ -62,14 +62,18 @@ joint_nums = p.getNumJoints(arm_a)
 #                  B E1  3 E2  5    H   W  X  X  R  L  
 #startingPos = [-1.5, 1, 0, 0, 0, 1.8,0.8, 0, 0, 1, 1]
 
-box_5 = [0, 0.5, 0,-2.3, 0, 2.8, 0.8]
-box_6 = [0, 1.1, 0,-1.15, 0, 2.25, 0.8]
+
+box_4 = [0, 0, 0,-3, 0, 3, 0.8]
+box_5 = [0, 0.5, 0,-2.3, 0, 3, 0.8]
+box_6 = [0, 1.0, 0,-1.15, 0, 2.25, 0.8]
+
 # pere = p.calculateInverseKinematics(arm_a, 7, [0.1,0.1,0.4])
 trayPrep    = [-1.5, 1, 0,-1.2, 0, 2.2, 0.8]
 pickedUp     = [-1.5, 1, 0,-0.8, 0, 1.8, 0.8]
-base_p1     = [-1.0, 1, 0,-0.8, 0, 1.8, 0.8]
-base_p2     = [-0.5, 1, 0,-0.8, 0, 1.8, 0.8]
-main_base    = [0, 1, 0,-1.2, 0, 2.2, 0.8]
+base_p1     = [-1.0, 0.8, 0,-1.2, 0, 2, 0.6]
+base_p2     = [-0.5, 0.6, 0,-1.6, 0, 2.2, 0.3]
+base_p3     = [-0, 0.4, 0,-2, 0, 2.4, 0.8]
+main_base    = [0, 0.3, 0,-2.2, 0, 2.5, 0.8]
 
 quick = 60
 slow = 100
@@ -97,6 +101,9 @@ move_arm(arm_a, base_p1)
 stepSim(slow)
 
 move_arm(arm_a, base_p2)
+stepSim(slow)
+
+move_arm(arm_a, base_p3)
 stepSim(slow)
 
 move_arm(arm_a, main_base)
