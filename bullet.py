@@ -22,7 +22,7 @@ def resetPos(arm):
     p.setJointMotorControlArray(arm, range(11), p.POSITION_CONTROL,targetPositions=startingPos)
 
 def move_arm(arm, pos):
-    p.setJointMotorControlArray(arm, range(7), p.POSITION_CONTROL,targetPositions=pos)
+    p.setJointMotorControlArray(arm, range(7), p.POSITION_CONTROL,targetPositions=pos,forces=[100]*7)
 
 def load_cubes():
     incr = 0
@@ -63,9 +63,11 @@ joint_nums = p.getNumJoints(arm_a)
 #startingPos = [-1.5, 1, 0, 0, 0, 1.8,0.8, 0, 0, 1, 1]
 
 box_1 = [0.51, 0, 0,-2.8, 0, 2.8, 1.1]
-box_4 = [0, 0, 0,-3, 0, 3, 0.8]
+box_2 = [0.40, 0.5, 0,-2.2, 0, 2.8, 1.2]
+box_3 = [0.28, 1.0, 0,-1.0, 0, 2.0, 1.0]
+box_4 = [0, 0, 0,-2.95, 0, 3, 0.8]
 box_5 = [0, 0.5, 0,-2.3, 0, 3, 0.8]
-box_6 = [0, 1.0, 0,-1.15, 0, 2.25, 0.8]
+box_6 = [0, 1.0, 0,-1.2, 0, 2.25, 0.8]
 
 # pere = p.calculateInverseKinematics(arm_a, 7, [0.1,0.1,0.4])
 trayPrep    = [-1.5, 1, 0,-1.2, 0, 2.2, 0.8]
@@ -73,10 +75,11 @@ pickedUp     = [-1.5, 1, 0,-0.8, 0, 1.8, 0.8]
 base_p1     = [-1.0, 0.8, 0,-1.2, 0, 2, 0.6]
 base_p2     = [-0.5, 0.6, 0,-1.6, 0, 2.2, 0.3]
 base_p3     = [-0, 0.4, 0,-2, 0, 2.4, 0.8]
+mid_base    = [-0.8, 0.6, 0,-1.6, 0, 2.2, 0.3]
 main_base    = [0, 0.3, 0,-2.2, 0, 2.5, 0.8]
 
 quick = 60
-slow = 100
+slow = 90
 p.setRealTimeSimulation(0)
 # Calculate and move arm up after pick up
 #p.setJointMotorControl2(arm_a, 1, p.POSITION_CONTROL, targetPosition=0.5)
@@ -97,19 +100,13 @@ stepSim(quick)
 move_arm(arm_a, pickedUp)
 stepSim(slow)
 
-move_arm(arm_a, base_p1)
-stepSim(slow)
-
-move_arm(arm_a, base_p2)
-stepSim(slow)
-
-move_arm(arm_a, base_p3)
+move_arm(arm_a, mid_base)
 stepSim(slow)
 
 move_arm(arm_a, main_base)
 stepSim(slow)
 
-move_arm(arm_a, box_1)
+move_arm(arm_a, box_6)
 stepSim(slow)
 
 release(arm_a)
