@@ -3,6 +3,10 @@ from turtle import position
 import pybullet as p
 import time
 import pybullet_data
+from PIL import Image
+import PIL
+import cv2
+import numpy as np
 
 # Variables ----------------------------------------------------------------
 #                  B E1  3 E2  5    H   W  X  X  R  L  
@@ -134,7 +138,10 @@ projectionMatrix = p.computeProjectionMatrixFOV(
     nearVal=0.1,
     farVal=3.1)
 
-p.getCameraImage(300,300,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
+img = p.getCameraImage(300,300,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
+
+rgbBuf = img[2]
+rgbim = Image.fromarray(rgbBuf)
 
 cubePos, cubeOrn = p.getBasePositionAndOrientation(arm_a)
 print(cubePos,cubeOrn)
