@@ -10,8 +10,8 @@ def stepSim(steps):
         time.sleep(0.01)
 
 def grab(arm):
-    p.setJointMotorControl2(arm, 10, p.POSITION_CONTROL,targetPosition=0.019, force=60)
-    p.setJointMotorControl2(arm, 9, p.POSITION_CONTROL,targetPosition=0.019, force=60)
+    p.setJointMotorControl2(arm, 10, p.POSITION_CONTROL,targetPosition=0.0185, force=60)
+    p.setJointMotorControl2(arm, 9, p.POSITION_CONTROL,targetPosition=0.0185, force=60)
 
 def release(arm):
     p.setJointMotorControl2(arm, 10, p.POSITION_CONTROL,targetPosition=1.5)
@@ -62,7 +62,7 @@ joint_nums = p.getNumJoints(arm_a)
 #                  B E1  3 E2  5    H   W  X  X  R  L  
 #startingPos = [-1.5, 1, 0, 0, 0, 1.8,0.8, 0, 0, 1, 1]
 
-
+box_1 = [0.51, 0, 0,-2.8, 0, 2.8, 1.1]
 box_4 = [0, 0, 0,-3, 0, 3, 0.8]
 box_5 = [0, 0.5, 0,-2.3, 0, 3, 0.8]
 box_6 = [0, 1.0, 0,-1.15, 0, 2.25, 0.8]
@@ -109,7 +109,7 @@ stepSim(slow)
 move_arm(arm_a, main_base)
 stepSim(slow)
 
-move_arm(arm_a, box_5)
+move_arm(arm_a, box_1)
 stepSim(slow)
 
 release(arm_a)
