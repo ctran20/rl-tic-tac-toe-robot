@@ -157,7 +157,14 @@ place_x(9)
 img = p.getCameraImage(300,300,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
 
 rgbBuf = img[2]
-rgbim = Image.fromarray(rgbBuf)
+
+rgbBuf = cv2.resize(rgbBuf, (700,600))
+hsv = cv2.cvtColor(rgbBuf, cv2.COLOR_BGR2HSV)
+lower = np.array([100, 50, 100])
+upper = np.array([255, 70, 255])
+mask = cv2.inRange(hsv, lower, upper)
+cv2.imshow("mask", mask)
+cv2.waitKey(0)
 
 cubePos, cubeOrn = p.getBasePositionAndOrientation(arm_a)
 print(cubePos,cubeOrn)
