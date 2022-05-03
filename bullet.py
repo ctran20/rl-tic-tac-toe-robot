@@ -3,6 +3,7 @@ from turtle import position
 import pybullet as p
 import time
 import pybullet_data
+
 from PIL import Image
 import PIL
 import cv2
@@ -11,13 +12,16 @@ import numpy as np
 # Variables ----------------------------------------------------------------
 #                  B E1  3 E2  5    H   W  X  X  R  L  
 #startingPos = [-1.5, 1, 0, 0, 0, 1.8,0.8, 0, 0, 1, 1]
-x_cubes = [ [-1.5, 1.66, 0,0, 0, 1.85, 0.8],    # 1st Cube
-            [-1.5, 1, 0,-1.2, 0, 2.2, 0.8]]     # 2nd Cube
-pickedUp     = [-1.5, 1, 0,-0.8, 0, 1.8, 0.8]
+x_cubes = [ [-1.5, 1.66, 0,0, 0, 1.85, 0.8],        # 1st Cube
+            [-1.5, 1, 0,-1.2, 0, 2.2, 0.8],         # 2nd Cube
+            [-1.49, 0.7, 0,-1.72, 0, 2.47, 0.8],    # 3rd Cube
+            [-1.48, 0.55, 0,-2.01, 0, 2.6, 0.8],    # 4th Cube
+            [-1.48, 0.4, 0,-2.27, 0, 2.7, 0.8]]     # 5th Cube
+pickedUp     = [-1.5, 0.8, 0,-1.2, 0, 2.5, 0.8]
 base_p1     = [-1.0, 0.8, 0,-1.2, 0, 2, 0.6]
 base_p2     = [-0.5, 0.6, 0,-1.6, 0, 2.2, 0.3]
 base_p3     = [-0, 0.4, 0,-2, 0, 2.4, 0.8]
-mid_base    = [-0.8, 0.6, 0,-1.6, 0, 2.2, 0.3]
+mid_base    = [-0.8, 0.6, 0,-1.5, 0, 2.2, 0.3]
 main_base    = [0, 0.3, 0,-2.2, 0, 2.5, 0.8]
 
 boxes = [[0.51, 0, 0,-2.8, 0, 2.8, 1.1],    # Box 1
@@ -53,12 +57,12 @@ def release(arm):
     stepSim(quick)
 
 def resetPos(arm):
-    startingPos = [-1.5, 1, 0, 0, 0, 1.8,0.8, 0, 0, 1, 1]
+    startingPos = [-1.5, 1, 0, -0.8, 0, 1.8,0.8, 0, 0, 1, 1]
     p.setJointMotorControlArray(arm, range(11), p.POSITION_CONTROL,targetPositions=startingPos)
     stepSim(quick)
 
-def move_arm(arm, pos, speed):#,forces=[100]*7
-    p.setJointMotorControlArray(arm, range(7), p.POSITION_CONTROL,targetPositions=pos)
+def move_arm(arm, pos, speed):
+    p.setJointMotorControlArray(arm, range(7), p.POSITION_CONTROL,targetPositions=pos,forces=[100]*7)
     stepSim(speed)
 
 # Load all cubes and textures
@@ -76,10 +80,17 @@ def load_cubes():
         p.changeVisualShape(o_cube[i], -1, textureUniqueId=o_text)
         p.changeVisualShape(x_cube[i], -1, textureUniqueId=x_text)
 
-#
+# Pick up the next available cube
+def pick_up_cube():
+    global x_picked
+    move_arm(arm_a, x_cubes[x_picked%5], quick)
+    grab(arm_a)
+    move_arm(arm_a, pickedUp, slow)
+    x_picked += 1
 
 # Place X_cubes into selected box
 def place_x(box_num):
+    pick_up_cube()
     move_arm(arm_a, mid_base,slow)
     move_arm(arm_a, main_base, slow)
     move_arm(arm_a, boxes[box_num-1], slow)
@@ -116,17 +127,6 @@ p.setJointMotorControlArray(arm_b, range(joint_nums), p.POSITION_CONTROL,
 targetPositions=[1]*joint_nums)
 p.setJointMotorControl2(arm_b, 3, p.POSITION_CONTROL, targetPosition=-2)
 
-
-
-# Controlling Arm ----------------------------------------------------------
-resetPos(arm_a)
-
-move_arm(arm_a, x_cubes[0], quick)
-grab(arm_a)
-move_arm(arm_a, pickedUp, slow)
-
-# --------------------------------------------------------------------------
-
 viewMatrix = p.computeViewMatrix(
     cameraEyePosition=[0, 0, 1.4],
     cameraTargetPosition=[0, 0, 0],
@@ -138,6 +138,22 @@ projectionMatrix = p.computeProjectionMatrixFOV(
     nearVal=0.1,
     farVal=3.1)
 
+
+# Controlling Arm ----------------------------------------------------------
+resetPos(arm_a)
+
+place_x(3)
+p.getCameraImage(300,300,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
+place_x(5)
+p.getCameraImage(300,300,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
+place_x(7)
+p.getCameraImage(300,300,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
+place_x(8)
+p.getCameraImage(300,300,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
+place_x(9)
+
+# --------------------------------------------------------------------------
+
 img = p.getCameraImage(300,300,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
 
 rgbBuf = img[2]
@@ -145,6 +161,7 @@ rgbim = Image.fromarray(rgbBuf)
 
 cubePos, cubeOrn = p.getBasePositionAndOrientation(arm_a)
 print(cubePos,cubeOrn)
+print("\nFinished!\n")
 
 while True:
     p.stepSimulation()
