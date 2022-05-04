@@ -10,17 +10,27 @@ import cv2
 import numpy as np
 
 # Variables ----------------------------------------------------------------
-#                  B E1  3 E2  5    H   W  X  X  R  L  
-#startingPos = [-1.5, 1, 0, 0, 0, 1.8,0.8, 0, 0, 1, 1]
+"""
+               B  E1  R1  E2  R2    H    W  X  X  R  L  
+position = [-1.5,  1,  0,  0,  0, 1.8, 0.8, 0, 0, 1, 1]
+
+B - Base
+E1 - Elbow 1
+E2 - Elbow 2
+R1 - Elbow 1 Rotate
+R2 - Elbow 2 Rotate
+H - Hand
+W - Wrist rotate
+R - Right finger
+L - Left finger
+
+"""
 x_cubes = [ [-1.5, 1.66, 0,0, 0, 1.85, 0.8],        # 1st Cube
             [-1.5, 1, 0,-1.2, 0, 2.2, 0.8],         # 2nd Cube
             [-1.49, 0.7, 0,-1.72, 0, 2.47, 0.8],    # 3rd Cube
             [-1.48, 0.55, 0,-2.01, 0, 2.6, 0.8],    # 4th Cube
             [-1.48, 0.4, 0,-2.27, 0, 2.7, 0.8]]     # 5th Cube
 pickedUp     = [-1.5, 0.8, 0,-1.2, 0, 2.5, 0.8]
-base_p1     = [-1.0, 0.8, 0,-1.2, 0, 2, 0.6]
-base_p2     = [-0.5, 0.6, 0,-1.6, 0, 2.2, 0.3]
-base_p3     = [-0, 0.4, 0,-2, 0, 2.4, 0.8]
 mid_base    = [-0.8, 0.6, 0,-1.5, 0, 2.2, 0.3]
 main_base    = [0, 0.3, 0,-2.2, 0, 2.5, 0.8]
 
@@ -30,13 +40,14 @@ boxes = [[0.51, 0, 0,-2.8, 0, 2.8, 1.1],    # Box 1
         [0, 0, 0,-2.95, 0, 3, 0.8],         # Box 4
         [0, 0.5, 0,-2.3, 0, 3, 0.8],        # Box 5
         [0, 1.0, 0,-1.2, 0, 2.25, 0.8],     # Box 6
-        [-0.51, 0, 0,-2.8, 0, 2.8, 0.4],    # Box 7
-        [-0.40, 0.5, 0,-2.2, 0, 2.8, 0.4],  # Box 8
-        [-0.28, 1.0, 0,-1.0, 0, 2.0, 0.6]]  # Box 9
+        [-0.51, 0, 0,-2.7, 0, 2.8, 0.3],    # Box 7
+        [-0.36, 0.5, 0,-2.1, 0, 2.8, 0.4],  # Box 8
+        [-0.20, 1.0, 0,-0.9, 0, 2.0, 0.5]]  # Box 9
 
 quick = 60
 slow = 90
 x_picked = 0
+o_picked = 0
 
 # Functions ----------------------------------------------------------------
 
@@ -75,28 +86,53 @@ def load_cubes():
 
     for i in range(5):
         x_cube[i] = p.loadURDF("cube_small.urdf",[-0.49,-0.54 - incr,0.73])
-        o_cube[i] = p.loadURDF("cube_small.urdf",[0.49,0.54 + incr,0.73])
+        o_cube[i] = p.loadURDF("cube_small.urdf",[0.59,0.465 + incr,0.73])
         incr += 0.07
         p.changeVisualShape(o_cube[i], -1, textureUniqueId=o_text)
         p.changeVisualShape(x_cube[i], -1, textureUniqueId=x_text)
 
 # Pick up the next available cube
-def pick_up_cube():
+def pick_up_cube(sign):
     global x_picked
-    move_arm(arm_a, x_cubes[x_picked%5], quick)
-    grab(arm_a)
-    move_arm(arm_a, pickedUp, slow)
-    x_picked += 1
+    global o_picked
 
-# Place X_cubes into selected box
-def place_x(box_num):
-    pick_up_cube()
-    move_arm(arm_a, mid_base,slow)
-    move_arm(arm_a, main_base, slow)
-    move_arm(arm_a, boxes[box_num-1], slow)
-    release(arm_a)
-    move_arm(arm_a, main_base, quick)
-    resetPos(arm_a)
+    # Sign 0 for X and 1 for O
+    if sign == 0:
+        move_arm(arm_a, x_cubes[x_picked%5], quick)
+        grab(arm_a)
+        move_arm(arm_a, pickedUp, slow)
+        x_picked += 1
+    else:
+        move_arm(arm_b, x_cubes[o_picked%5], quick)
+        grab(arm_b)
+        move_arm(arm_b, pickedUp, slow)
+        o_picked += 1
+
+"""
+Place cubes into selected box
+    sign - 0 for X and 1 for O
+    box_num - position to place cube in
+                    O
+            1 2 3 
+            4 5 6
+            7 8 9
+        X
+"""
+def place_cube(sign, box_num):
+    # Change arm based on sign
+    if sign == 0:
+        arm = arm_a
+    else:
+        arm = arm_b
+        box_num = 10-box_num
+        
+    pick_up_cube(sign)
+    move_arm(arm, mid_base,slow)
+    move_arm(arm, main_base, slow)
+    move_arm(arm, boxes[box_num-1], slow)
+    release(arm)
+    move_arm(arm, main_base, quick)
+    resetPos(arm)
 
 # Main ---------------------------------------------------------------------
 
@@ -111,21 +147,12 @@ planeId = p.loadURDF("plane.urdf")
 
 table_a = p.loadURDF("table/table.urdf",[0,0,0])
 table_b = p.loadURDF("tic_tac_toe_board/table_square.urdf",[0,0.005,0])
-tray_a = p.loadURDF("tray/traybox.urdf",[0.5,0.68,0.69])
-tray_b = p.loadURDF("tray/traybox.urdf",[-0.5,-0.68,0.69])
+tray_a = p.loadURDF("tray/traybox.urdf",[0.62,0.65,0.67])
+tray_b = p.loadURDF("tray/traybox.urdf",[-0.62,-0.68,0.67])
 arm_a = p.loadURDF("franka_panda/panda.urdf",[-0.55,0,0.65], p.getQuaternionFromEuler([0,0,0]), useFixedBase=1)
-arm_b  = p.loadURDF("franka_panda/panda.urdf",[0.55,0,0.65], p.getQuaternionFromEuler([0,0,3]), useFixedBase=1)
+arm_b  = p.loadURDF("franka_panda/panda.urdf",[0.548,-0.07,0.65], p.getQuaternionFromEuler([0,0,3]), useFixedBase=1)
 
-joint_nums = p.getNumJoints(arm_a)
 p.setRealTimeSimulation(0)
-# pere = p.calculateInverseKinematics(arm_a, 7, [0.1,0.1,0.4])
-
-# Calculate and move arm up after pick up
-#p.setJointMotorControl2(arm_a, 1, p.POSITION_CONTROL, targetPosition=0.5)
-
-p.setJointMotorControlArray(arm_b, range(joint_nums), p.POSITION_CONTROL,
-targetPositions=[1]*joint_nums)
-p.setJointMotorControl2(arm_b, 3, p.POSITION_CONTROL, targetPosition=-2)
 
 viewMatrix = p.computeViewMatrix(
     cameraEyePosition=[0, 0, 1.4],
@@ -141,30 +168,22 @@ projectionMatrix = p.computeProjectionMatrixFOV(
 
 # Controlling Arm ----------------------------------------------------------
 resetPos(arm_a)
+resetPos(arm_b)
 
-place_x(3)
-p.getCameraImage(300,300,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
-place_x(5)
-p.getCameraImage(300,300,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
-place_x(7)
-p.getCameraImage(300,300,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
-place_x(8)
-p.getCameraImage(300,300,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
-place_x(9)
+place_cube(0,5)
+place_cube(1,2)
+place_cube(0,1)
+place_cube(1,9)
+place_cube(0,4)
+place_cube(1,7)
+place_cube(0,6)
 
 # --------------------------------------------------------------------------
 
 img = p.getCameraImage(300,300,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
 
 rgbBuf = img[2]
-
-rgbBuf = cv2.resize(rgbBuf, (700,600))
-hsv = cv2.cvtColor(rgbBuf, cv2.COLOR_BGR2HSV)
-lower = np.array([100, 50, 100])
-upper = np.array([255, 70, 255])
-mask = cv2.inRange(hsv, lower, upper)
-cv2.imshow("mask", mask)
-cv2.waitKey(0)
+rgbim = Image.fromarray(rgbBuf)
 
 cubePos, cubeOrn = p.getBasePositionAndOrientation(arm_a)
 print(cubePos,cubeOrn)
