@@ -25,11 +25,12 @@ R - Right finger
 L - Left finger
 
 """
-x_cubes = [ [-1.5, 1.66, 0,0, 0, 1.85, 0.8],        # 1st Cube
-            [-1.5, 1, 0,-1.2, 0, 2.2, 0.8],         # 2nd Cube
-            [-1.49, 0.7, 0,-1.72, 0, 2.47, 0.8],    # 3rd Cube
-            [-1.48, 0.55, 0,-2.01, 0, 2.6, 0.8],    # 4th Cube
-            [-1.48, 0.4, 0,-2.27, 0, 2.7, 0.8]]     # 5th Cube
+cubes = [ [-1.5, 1.66, 0,0, 0, 1.85, 0.8],      # 1st Cube
+        [-1.5, 1, 0,-1.2, 0, 2.2, 0.8],         # 2nd Cube
+        [-1.49, 0.7, 0,-1.72, 0, 2.47, 0.8],    # 3rd Cube
+        [-1.48, 0.55, 0,-2.01, 0, 2.6, 0.8],    # 4th Cube
+        [-1.48, 0.4, 0,-2.27, 0, 2.7, 0.8]]     # 5th Cube
+
 pickedUp     = [-1.5, 0.8, 0,-1.2, 0, 2.5, 0.8]
 mid_base    = [-0.8, 0.6, 0,-1.5, 0, 2.2, 0.3]
 main_base    = [0, 0.3, 0,-2.2, 0, 2.5, 0.8]
@@ -98,12 +99,12 @@ def pick_up_cube(sign):
 
     # Sign 0 for X and 1 for O
     if sign == 0:
-        move_arm(arm_a, x_cubes[x_picked%5], quick)
+        move_arm(arm_a, cubes[x_picked%5], quick)
         grab(arm_a)
         move_arm(arm_a, pickedUp, slow)
         x_picked += 1
     else:
-        move_arm(arm_b, x_cubes[o_picked%5], quick)
+        move_arm(arm_b, cubes[o_picked%5], quick)
         grab(arm_b)
         move_arm(arm_b, pickedUp, slow)
         o_picked += 1
@@ -155,7 +156,7 @@ arm_b  = p.loadURDF("franka_panda/panda.urdf",[0.548,-0.07,0.65], p.getQuaternio
 p.setRealTimeSimulation(0)
 
 viewMatrix = p.computeViewMatrix(
-    cameraEyePosition=[0, 0, 1.4],
+    cameraEyePosition=[0, 0, 1.36],
     cameraTargetPosition=[0, 0, 0],
     cameraUpVector=[0, 1, 0])
 
@@ -172,11 +173,11 @@ resetPos(arm_b)
 
 place_cube(0,5)
 place_cube(1,2)
-place_cube(0,1)
-place_cube(1,9)
-place_cube(0,4)
-place_cube(1,7)
-place_cube(0,6)
+#place_cube(0,1)
+#place_cube(1,9)
+#place_cube(0,4)
+#place_cube(1,7)
+#place_cube(0,6)
 
 # --------------------------------------------------------------------------
 
@@ -184,6 +185,7 @@ img = p.getCameraImage(300,300,viewMatrix=viewMatrix,projectionMatrix=projection
 
 rgbBuf = img[2]
 rgbim = Image.fromarray(rgbBuf)
+rgbim.save('rgbtest.png')
 
 cubePos, cubeOrn = p.getBasePositionAndOrientation(arm_a)
 print(cubePos,cubeOrn)
