@@ -171,17 +171,16 @@ projectionMatrix = p.computeProjectionMatrixFOV(
 resetPos(arm_a)
 resetPos(arm_b)
 
-place_cube(0,5)
+place_cube(1,5)
+place_cube(1,4)
+place_cube(1,3)
 place_cube(1,2)
-#place_cube(0,1)
-#place_cube(1,9)
-#place_cube(0,4)
-#place_cube(1,7)
-#place_cube(0,6)
+place_cube(1,1)
+
 
 # --------------------------------------------------------------------------
 
-img = p.getCameraImage(300,300,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
+img = p.getCameraImage(600,600,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
 
 rgbBuf = img[2]
 rgbim = Image.fromarray(rgbBuf)
