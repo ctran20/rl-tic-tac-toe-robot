@@ -184,6 +184,17 @@ img = p.getCameraImage(600,600,viewMatrix=viewMatrix,projectionMatrix=projection
 rgbBuf = img[2]
 rgbim = Image.fromarray(rgbBuf)
 rgbim.save('rgbtest.png')
+rgbBuf = cv2.resize(rgbBuf, (700,600))
+hsv = cv2.cvtColor(rgbBuf, cv2.COLOR_BGR2HSV)
+lower_g = np.array([40,100,100])
+upper_g = np.array([80,255,255])
+mask_g = cv2.inRange(hsv, lower_g, upper_g)
+lower_r = np.array([100,40,100])
+upper_r = np.array([255,80,255])
+mask_r = cv2.inRange(hsv, lower_r, upper_r)
+cv2.imshow("Green Mask", mask_g)
+cv2.imshow("Red Mask", mask_r)
+cv2.waitKey(0)
 
 cubePos, cubeOrn = p.getBasePositionAndOrientation(arm_a)
 print(cubePos,cubeOrn)
