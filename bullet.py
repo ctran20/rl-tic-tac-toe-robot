@@ -171,12 +171,11 @@ projectionMatrix = p.computeProjectionMatrixFOV(
 resetPos(arm_a)
 resetPos(arm_b)
 
-place_cube(1,5)
-place_cube(1,4)
-place_cube(1,3)
-place_cube(1,2)
 place_cube(1,1)
-
+place_cube(0,2)
+place_cube(1,5)
+place_cube(0,7)
+place_cube(1,9)
 
 # --------------------------------------------------------------------------
 
