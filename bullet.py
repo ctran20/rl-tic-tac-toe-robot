@@ -41,7 +41,7 @@ boxes = [[0.51, 0, 0,-2.8, 0, 2.8, 1.1],    # Box 1
         [0, 0, 0,-2.95, 0, 3, 0.8],         # Box 4
         [0, 0.5, 0,-2.3, 0, 3, 0.8],        # Box 5
         [0, 1.0, 0,-1.2, 0, 2.25, 0.8],     # Box 6
-        [-0.51, 0.1, 0,-2.7, 0, 2.8, 0.3],    # Box 7
+        [-0.51, 0.1, 0,-2.7, 0, 2.8, 0.3],  # Box 7
         [-0.36, 0.5, 0,-2.1, 0, 2.8, 0.4],  # Box 8
         [-0.24, 1.1, 0,-0.9, 0, 2.0, 0.5]]  # Box 9
 
@@ -197,6 +197,7 @@ def convert_grid(grid, color):
 
     return grid
 
+# Update grid with current state of board
 def update_grid(grid):
     # Save camera rgb image and use color mask to seperate X, O
     take_picture()
@@ -216,7 +217,7 @@ def update_grid(grid):
 # Main ---------------------------------------------------------------------
 physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
 p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
-grid = [' ']*9
+grid = [' '] * 9
 
 # Load models
 load_cubes()
@@ -236,19 +237,19 @@ p.setRealTimeSimulation(0)
 resetPos(arm_a)
 resetPos(arm_b)
 
-place_cube(0,1)
+place_cube(1,1)
 update_grid(grid)
-place_cube(1,2)
+place_cube(0,2)
 update_grid(grid)
-place_cube(0,3)
+place_cube(1,3)
 update_grid(grid)
-place_cube(1,5)
+place_cube(0,5)
 update_grid(grid)
-place_cube(0,8)
+place_cube(1,8)
 update_grid(grid)
-place_cube(1,9)
+place_cube(0,9)
 update_grid(grid)
-place_cube(0,7)
+place_cube(1,7)
 update_grid(grid)
 
 # --------------------------------------------------------------------------
