@@ -135,6 +135,7 @@ def place_cube(sign, box_num):
     move_arm(arm, main_base, quick)
     resetPos(arm)
 
+# Take picture from camera and save
 def take_picture():
     viewMatrix = p.computeViewMatrix(
         cameraEyePosition=[0, 0, 1.35],
@@ -152,10 +153,9 @@ def take_picture():
     rgbim = Image.fromarray(rgbBuf)
     rgbim.save('rgb_pic.png')
 
+# Use color mask to seperate X, O
 def save_color_mask():
     img = cv2.imread('rgb_pic.png')
-
-    # Use color mask to seperate X, O
     img = cv2.resize(img, (600,600))
     mask_b = cv2.inRange(img, (50,0,0), (255, 50, 50))
     mask_r = cv2.inRange(img, (0, 0, 50), (50, 50,255))
@@ -164,6 +164,7 @@ def save_color_mask():
     #cv2.imshow("Blue Mask", mask_b)
     #cv2.imshow("Red Mask", mask_r)
 
+# Split mask into 9 boxes
 def crop_board(color):
     # Opens a image in RGB mode
     im = Image.open(f"{color}_mask.png")
@@ -176,17 +177,50 @@ def crop_board(color):
             im1.save(f"board_crops/{color}/{box}.png")
             box += 1
 
-# Main ---------------------------------------------------------------------
+# Convert image info into 2D grid
+def convert_grid(grid, color):
+    box = 1
 
+    if color == 'red':
+        symbol = 'x'
+    else:
+        symbol = 'o'
+
+    for i in range(9):
+        img = Image.open(f"board_crops/{color}/{box}.png")
+        box += 1
+        extrema = img.convert("L").getextrema()
+
+        # Image not blank
+        if extrema != (0, 0):
+            grid[i] = symbol
+
+    return grid
+
+def update_grid(grid):
+    # Save camera rgb image and use color mask to seperate X, O
+    take_picture()
+    save_color_mask()
+
+    # Split x,o masks into 9 boxes
+    crop_board('red')
+    crop_board('blue')
+    
+    # Convert image info into 2D grid
+    grid = convert_grid(grid, 'red')
+    grid = convert_grid(grid, 'blue')
+
+    print(grid)
+    return grid
+
+# Main ---------------------------------------------------------------------
 physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
 p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
-p.setGravity(0,0,-9.81)
+grid = [' ']*9
+
+# Load models
 load_cubes()
-
-# Load Models [x, y ,z]
 planeId = p.loadURDF("plane.urdf")
-#p.loadURDF("cube_small.urdf",[-0.49,-0.76,0.72])
-
 table_a = p.loadURDF("table/table.urdf",[0,0,0])
 table_b = p.loadURDF("tic_tac_toe_board/table_square.urdf",[0,0.005,0])
 tray_a = p.loadURDF("tray/traybox.urdf",[0.62,0.65,0.67])
@@ -194,39 +228,34 @@ tray_b = p.loadURDF("tray/traybox.urdf",[-0.62,-0.68,0.67])
 arm_a = p.loadURDF("franka_panda/panda.urdf",[-0.55,0,0.65], p.getQuaternionFromEuler([0,0,0]), useFixedBase=1)
 arm_b  = p.loadURDF("franka_panda/panda.urdf",[0.548,-0.07,0.65], p.getQuaternionFromEuler([0,0,3]), useFixedBase=1)
 
+# Set physics
+p.setGravity(0,0,-9.81)
 p.setRealTimeSimulation(0)
 
 # Controlling Arm ----------------------------------------------------------
 resetPos(arm_a)
 resetPos(arm_b)
 
-place_cube(1,1)
+place_cube(0,1)
+update_grid(grid)
 place_cube(1,2)
-place_cube(1,3)
-place_cube(1,4)
+update_grid(grid)
+place_cube(0,3)
+update_grid(grid)
 place_cube(1,5)
-
-place_cube(0,6)
-place_cube(0,7)
+update_grid(grid)
 place_cube(0,8)
-place_cube(0,9)
+update_grid(grid)
+place_cube(1,9)
+update_grid(grid)
+place_cube(0,7)
+update_grid(grid)
 
 # --------------------------------------------------------------------------
 
-# Save camera rgb image and use color mask to seperate X, O
-take_picture()
-save_color_mask()
+#cubePos, cubeOrn = p.getBasePositionAndOrientation(arm_a)
+#print(cubePos,cubeOrn)
 
-# Split x,o masks into 9 boxes
-crop_board('red')
-crop_board('blue')
-  
-# Convert image info into 2D grid
-
-
-
-cubePos, cubeOrn = p.getBasePositionAndOrientation(arm_a)
-print(cubePos,cubeOrn)
 print("\nFinished!\n")
 
 while True:
