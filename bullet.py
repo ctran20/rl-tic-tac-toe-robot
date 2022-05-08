@@ -186,14 +186,15 @@ def convert_grid(grid, color):
     else:
         symbol = 'o'
 
-    for i in range(9):
-        img = Image.open(f"board_crops/{color}/{box}.png")
-        box += 1
-        extrema = img.convert("L").getextrema()
+    for i in range(3):
+        for j in range(3):
+            img = Image.open(f"board_crops/{color}/{box}.png")
+            box += 1
+            extrema = img.convert("L").getextrema()
 
-        # Image not blank
-        if extrema != (0, 0):
-            grid[i] = symbol
+            # Image not blank
+            if extrema != (0, 0):
+                grid[i][j] = symbol
 
     return grid
 
@@ -217,7 +218,7 @@ def update_grid(grid):
 # Main ---------------------------------------------------------------------
 physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
 p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
-grid = [' '] * 9
+grid = [[' '] * 3 for _ in range(3)]
 
 # Load models
 load_cubes()
