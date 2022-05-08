@@ -41,9 +41,9 @@ boxes = [[0.51, 0, 0,-2.8, 0, 2.8, 1.1],    # Box 1
         [0, 0, 0,-2.95, 0, 3, 0.8],         # Box 4
         [0, 0.5, 0,-2.3, 0, 3, 0.8],        # Box 5
         [0, 1.0, 0,-1.2, 0, 2.25, 0.8],     # Box 6
-        [-0.51, 0, 0,-2.7, 0, 2.8, 0.3],    # Box 7
+        [-0.51, 0.1, 0,-2.7, 0, 2.8, 0.3],    # Box 7
         [-0.36, 0.5, 0,-2.1, 0, 2.8, 0.4],  # Box 8
-        [-0.20, 1.0, 0,-0.9, 0, 2.0, 0.5]]  # Box 9
+        [-0.24, 1.1, 0,-0.9, 0, 2.0, 0.5]]  # Box 9
 
 quick = 60
 slow = 90
@@ -135,6 +135,47 @@ def place_cube(sign, box_num):
     move_arm(arm, main_base, quick)
     resetPos(arm)
 
+def take_picture():
+    viewMatrix = p.computeViewMatrix(
+        cameraEyePosition=[0, 0, 1.35],
+        cameraTargetPosition=[0, 0, 0],
+        cameraUpVector=[0, 1, 0])
+
+    projectionMatrix = p.computeProjectionMatrixFOV(
+        fov=45.0,
+        aspect=1.0,
+        nearVal=0.1,
+        farVal=3.1)
+
+    img = p.getCameraImage(600,600,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
+    rgbBuf = img[2]
+    rgbim = Image.fromarray(rgbBuf)
+    rgbim.save('rgb_pic.png')
+
+def save_color_mask():
+    img = cv2.imread('rgb_pic.png')
+
+    # Use color mask to seperate X, O
+    img = cv2.resize(img, (600,600))
+    mask_b = cv2.inRange(img, (50,0,0), (255, 50, 50))
+    mask_r = cv2.inRange(img, (0, 0, 50), (50, 50,255))
+    cv2.imwrite("blue_mask.png", mask_b)
+    cv2.imwrite("red_mask.png", mask_r)
+    #cv2.imshow("Blue Mask", mask_b)
+    #cv2.imshow("Red Mask", mask_r)
+
+def crop_board(color):
+    # Opens a image in RGB mode
+    im = Image.open(f"{color}_mask.png")
+
+    box = 1
+    # im1 = im.crop((left, top, right, bottom))
+    for i in range(0, 600,200):
+        for j in range(0,600,200):
+            im1 = im.crop((j, i, j+200, i+200))
+            im1.save(f"board_crops/{color}/{box}.png")
+            box += 1
+
 # Main ---------------------------------------------------------------------
 
 physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
@@ -155,46 +196,34 @@ arm_b  = p.loadURDF("franka_panda/panda.urdf",[0.548,-0.07,0.65], p.getQuaternio
 
 p.setRealTimeSimulation(0)
 
-viewMatrix = p.computeViewMatrix(
-    cameraEyePosition=[0, 0, 1.36],
-    cameraTargetPosition=[0, 0, 0],
-    cameraUpVector=[0, 1, 0])
-
-projectionMatrix = p.computeProjectionMatrixFOV(
-    fov=45.0,
-    aspect=1.0,
-    nearVal=0.1,
-    farVal=3.1)
-
-
 # Controlling Arm ----------------------------------------------------------
 resetPos(arm_a)
 resetPos(arm_b)
 
 place_cube(1,1)
-place_cube(0,2)
+place_cube(1,2)
+place_cube(1,3)
+place_cube(1,4)
 place_cube(1,5)
+
+place_cube(0,6)
 place_cube(0,7)
-place_cube(1,9)
+place_cube(0,8)
+place_cube(0,9)
 
 # --------------------------------------------------------------------------
 
-img = p.getCameraImage(600,600,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix,renderer=p.ER_TINY_RENDERER)
+# Save camera rgb image and use color mask to seperate X, O
+take_picture()
+save_color_mask()
 
-rgbBuf = img[2]
-rgbim = Image.fromarray(rgbBuf)
-rgbim.save('rgbtest.png')
-rgbBuf = cv2.resize(rgbBuf, (700,600))
-hsv = cv2.cvtColor(rgbBuf, cv2.COLOR_BGR2HSV)
-lower_g = np.array([40,100,100])
-upper_g = np.array([80,255,255])
-mask_g = cv2.inRange(hsv, lower_g, upper_g)
-lower_r = np.array([100,40,100])
-upper_r = np.array([255,80,255])
-mask_r = cv2.inRange(hsv, lower_r, upper_r)
-cv2.imshow("Green Mask", mask_g)
-cv2.imshow("Red Mask", mask_r)
-cv2.waitKey(0)
+# Split x,o masks into 9 boxes
+crop_board('red')
+crop_board('blue')
+  
+# Convert image info into 2D grid
+
+
 
 cubePos, cubeOrn = p.getBasePositionAndOrientation(arm_a)
 print(cubePos,cubeOrn)
