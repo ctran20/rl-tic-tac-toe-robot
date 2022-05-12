@@ -240,23 +240,59 @@ resetPos(arm_b)
 
 place_cube(1,1)
 update_grid(grid)
-place_cube(0,2)
-update_grid(grid)
-place_cube(1,3)
-update_grid(grid)
-place_cube(0,5)
-update_grid(grid)
-place_cube(1,8)
-update_grid(grid)
-place_cube(0,9)
-update_grid(grid)
-place_cube(1,7)
-update_grid(grid)
+#place_cube(0,2)
+#update_grid(grid)
+#place_cube(1,3)
+#update_grid(grid)
+#place_cube(0,5)
+#update_grid(grid)
+#place_cube(1,8)
+#update_grid(grid)
+#place_cube(0,9)
+#update_grid(grid)
+#place_cube(1,7)
+#update_grid(grid)
 
 # --------------------------------------------------------------------------
 
 #cubePos, cubeOrn = p.getBasePositionAndOrientation(arm_a)
 #print(cubePos,cubeOrn)
+
+#---------------------------------------------------------------------------
+#The fun part
+#Step 1: establish action state pairs
+
+#States = I googled it because i'm lazy
+States = 5478
+
+#Actions = The actions represent the 9 different spaces a block can be dropped
+Actions = 9
+#using the matrix to limit the number of actions will be necessary, considering you can't drop one block on another
+
+#Now that that's established we can set up the Q-table
+qtable = np.random.rand(States, Actions).tolist()
+
+#We can set up the robot to act greedily most of the time, but sometimes do something random just to see what happens
+#This is done using an epsilon value
+epsilon = 0.08
+
+'''
+So here's what happens now. We run the robot through a bunch of different games, and assign reward values to
+the states based on whether the robot wins or loses. Let's say for example the robot does move X in state Y and
+that causes it to lose the game, the algorithm lowers the reward score of that state. We can lower the scores more
+for example if the robot does something that immediately loses them the game, versus their first move which doesn't
+matter as much. The opposite happens when the robot does a move that wins them the game. That way the table can be
+constantly updated every time it plays so the robot gets better every game.
+
+Challenges: how to establish and distinguish the states, how to tell what the winning states or losing states are,
+whether or not to have the opponent act randomly during training or allow user influence (random probably better),
+and how to explain during the presentation that this is actually useful.
+'''
+
+
+#---------------------------------------------------------------------------
+
+
 
 print("\nFinished!\n")
 
