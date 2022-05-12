@@ -87,7 +87,7 @@ def load_cubes():
 
     for i in range(5):
         x_cube[i] = p.loadURDF("cube_small.urdf",[-0.49,-0.54 - incr,0.73])
-        o_cube[i] = p.loadURDF("cube_small.urdf",[0.59,0.465 + incr,0.73])
+        o_cube[i] = p.loadURDF("cube_small.urdf",[0.591,0.47 + incr,0.73])
         incr += 0.07
         p.changeVisualShape(o_cube[i], -1, textureUniqueId=o_text)
         p.changeVisualShape(x_cube[i], -1, textureUniqueId=x_text)
@@ -99,12 +99,16 @@ def pick_up_cube(sign):
 
     # Sign 0 for X and 1 for O
     if sign == 0:
-        move_arm(arm_a, cubes[x_picked%5], quick)
+        # Precise pick up
+        p.setJointMotorControlArray(arm_a, range(7), p.POSITION_CONTROL,targetPositions=cubes[x_picked%5])
+        stepSim(quick)
         grab(arm_a)
         move_arm(arm_a, pickedUp, slow)
         x_picked += 1
     else:
-        move_arm(arm_b, cubes[o_picked%5], quick)
+        # Precise pick up
+        p.setJointMotorControlArray(arm_b, range(7), p.POSITION_CONTROL,targetPositions=cubes[x_picked%5])
+        stepSim(quick)
         grab(arm_b)
         move_arm(arm_b, pickedUp, slow)
         o_picked += 1
@@ -225,9 +229,9 @@ load_cubes()
 planeId = p.loadURDF("plane.urdf")
 table_a = p.loadURDF("table/table.urdf",[0,0,0])
 table_b = p.loadURDF("tic_tac_toe_board/table_square.urdf",[0,0.005,0])
-tray_a = p.loadURDF("tray/traybox.urdf",[0.62,0.65,0.67])
-tray_b = p.loadURDF("tray/traybox.urdf",[-0.62,-0.68,0.67])
-arm_a = p.loadURDF("franka_panda/panda.urdf",[-0.55,0,0.65], p.getQuaternionFromEuler([0,0,0]), useFixedBase=1)
+tray_a = p.loadURDF("tray/traybox.urdf",[-0.62,-0.68,0.68]) # Red
+tray_b = p.loadURDF("tray/traybox.urdf",[0.64,0.64,0.68])
+arm_a = p.loadURDF("franka_panda/panda.urdf",[-0.55,0,0.65], p.getQuaternionFromEuler([0,0,0]), useFixedBase=1) # Red
 arm_b  = p.loadURDF("franka_panda/panda.urdf",[0.548,-0.07,0.65], p.getQuaternionFromEuler([0,0,3]), useFixedBase=1)
 
 # Set physics
@@ -240,9 +244,9 @@ resetPos(arm_b)
 
 place_cube(1,1)
 update_grid(grid)
-#place_cube(0,2)
-#update_grid(grid)
-#place_cube(1,3)
+place_cube(0,2)
+update_grid(grid)
+place_cube(1,3)
 #update_grid(grid)
 #place_cube(0,5)
 #update_grid(grid)
@@ -251,6 +255,10 @@ update_grid(grid)
 #place_cube(0,9)
 #update_grid(grid)
 #place_cube(1,7)
+#update_grid(grid)
+#place_cube(0,4)
+#update_grid(grid)
+#place_cube(0,6)
 #update_grid(grid)
 
 # --------------------------------------------------------------------------
