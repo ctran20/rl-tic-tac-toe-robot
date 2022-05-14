@@ -87,7 +87,7 @@ def load_cubes():
 
     for i in range(5):
         x_cube[i] = p.loadURDF("cube_small.urdf",[-0.49,-0.54 - incr,0.73])
-        o_cube[i] = p.loadURDF("cube_small.urdf",[0.591,0.47 + incr,0.73])
+        o_cube[i] = p.loadURDF("cube_small.urdf",[0.59,0.465 + incr,0.73])
         incr += 0.07
         p.changeVisualShape(o_cube[i], -1, textureUniqueId=o_text)
         p.changeVisualShape(x_cube[i], -1, textureUniqueId=x_text)
@@ -99,16 +99,12 @@ def pick_up_cube(sign):
 
     # Sign 0 for X and 1 for O
     if sign == 0:
-        # Precise pick up
-        p.setJointMotorControlArray(arm_a, range(7), p.POSITION_CONTROL,targetPositions=cubes[x_picked%5])
-        stepSim(quick)
+        move_arm(arm_a, cubes[x_picked%5], quick)
         grab(arm_a)
         move_arm(arm_a, pickedUp, slow)
         x_picked += 1
     else:
-        # Precise pick up
-        p.setJointMotorControlArray(arm_b, range(7), p.POSITION_CONTROL,targetPositions=cubes[x_picked%5])
-        stepSim(quick)
+        move_arm(arm_b, cubes[o_picked%5], quick)
         grab(arm_b)
         move_arm(arm_b, pickedUp, slow)
         o_picked += 1
@@ -186,9 +182,9 @@ def convert_grid(grid, color):
     box = 1
 
     if color == 'red':
-        symbol = 'x'
+        symbol = 1
     else:
-        symbol = 'o'
+        symbol = -1
 
     for i in range(3):
         for j in range(3):
@@ -219,19 +215,45 @@ def update_grid(grid):
     print(grid)
     return grid
 
+#check if the current state is a winning state
+def is_win(grid):
+	for i in range(3):
+		if sum(grid[i, :]) == 3:
+			return 1
+		if sum(grid[i, :]) == -3:
+			return -1
+	for j in range(3):
+		if sum(grid[:, j]) == 3:
+			return 1
+		if sum(grid[:, j]) == -3:
+			return -1
+	if (grid[0, 0] + grid[1, 1] + grid[2, 2]) == 3 or (grid[0, 2] + grid[1, 1] + grid[2, 0]) == 3:
+		return 1
+	if (grid[0, 0] + grid[1, 1] + grid[2, 2]) == -3 or (grid[0, 2] + grid[1, 1] + grid[2, 0]) == -3:
+		return -1
+	return 0
+
+#checks if the grid is full
+def is_full(grid):
+	for r in range(3):
+		for c in range(3):
+			if(grid[r, c] == 0):
+				return 0
+	return 1
+
 # Main ---------------------------------------------------------------------
 physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
 p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
-grid = [[' '] * 3 for _ in range(3)]
+grid = np.zeros((3, 3))
 
 # Load models
 load_cubes()
 planeId = p.loadURDF("plane.urdf")
 table_a = p.loadURDF("table/table.urdf",[0,0,0])
 table_b = p.loadURDF("tic_tac_toe_board/table_square.urdf",[0,0.005,0])
-tray_a = p.loadURDF("tray/traybox.urdf",[-0.62,-0.68,0.68]) # Red
-tray_b = p.loadURDF("tray/traybox.urdf",[0.64,0.64,0.68])
-arm_a = p.loadURDF("franka_panda/panda.urdf",[-0.55,0,0.65], p.getQuaternionFromEuler([0,0,0]), useFixedBase=1) # Red
+tray_a = p.loadURDF("tray/traybox.urdf",[0.62,0.65,0.67])
+tray_b = p.loadURDF("tray/traybox.urdf",[-0.62,-0.68,0.67])
+arm_a = p.loadURDF("franka_panda/panda.urdf",[-0.55,0,0.65], p.getQuaternionFromEuler([0,0,0]), useFixedBase=1)
 arm_b  = p.loadURDF("franka_panda/panda.urdf",[0.548,-0.07,0.65], p.getQuaternionFromEuler([0,0,3]), useFixedBase=1)
 
 # Set physics
@@ -242,11 +264,11 @@ p.setRealTimeSimulation(0)
 resetPos(arm_a)
 resetPos(arm_b)
 
-place_cube(1,1)
-update_grid(grid)
-place_cube(0,2)
-update_grid(grid)
-place_cube(1,3)
+#place_cube(1,1)
+#update_grid(grid)
+#place_cube(0,2)
+#update_grid(grid)
+#place_cube(1,3)
 #update_grid(grid)
 #place_cube(0,5)
 #update_grid(grid)
@@ -255,10 +277,6 @@ place_cube(1,3)
 #place_cube(0,9)
 #update_grid(grid)
 #place_cube(1,7)
-#update_grid(grid)
-#place_cube(0,4)
-#update_grid(grid)
-#place_cube(0,6)
 #update_grid(grid)
 
 # --------------------------------------------------------------------------
@@ -297,6 +315,94 @@ whether or not to have the opponent act randomly during training or allow user i
 and how to explain during the presentation that this is actually useful.
 '''
 
+gridstr = str(grid)
+print(gridstr)
+
+'''
+OK LISTEN THE FUCK UP FUTURE CHARLIE, WE GOT THIS IN THE FUCKIN BAG NOW ALL WE GOTTA DO IS WRITE THE SHIT
+so heres the fuckin plan
+step 1: get the current state as a STRING (SIDE NOTE IM A FUCKING GENIUS)
+step 2: check if that string is in the array of established states
+step 3: if it isn't, add it to the array and the index of that state corresponds to the index in the SA array
+step 4: pick an action based on greedy alg + which spaces are open
+step 5: repeat until the game ends, then update the reward values based on if it won or lost
+step 6: rinse and repeat baby, ggez
+'''
+
+gridarr = [None]
+movesarr = np.zeros((4, 2))
+index = -1
+movind = 0
+while(1):
+	if is_win(grid)==0:
+		if is_full(grid) == 0:
+			while(1):
+				r = np.random.randint(0,3)
+				c = np.random.randint(0,3)
+				if grid[r, c] == 0:
+					print(r, c)
+					place_cube(1, (3*r+(c+1)))
+					update_grid(grid)
+					break
+		else:
+			print("Tie game! Reward values untouched")
+			break
+	else:
+		if is_win(grid) == 1:
+			print("Good job! Increasing reward values")
+			for i in range(movind):
+				qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 0.5
+				if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 1
+				print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
+		else:
+			print("You suck! Decreasing reward values")
+			for i in range(movind):
+				qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.5
+				if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 1
+				print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
+		break
+	if gridstr not in gridarr: 
+		gridarr.append(gridstr)
+	index = gridarr.index(gridstr)
+	movesarr[movind][0] = index
+	if is_win(grid)==0:
+		if is_full(grid) == 0:
+			best_move = 0
+			best_num = 0
+			r = 0
+			c = 0
+			for i in range(9):
+				#print(r, c)
+				if qtable[index][i] > best_move and grid[r, c] == 0:
+					best_move = qtable[index][i]
+					best_num = i
+				if (c < 2):
+					c = c+1
+				else:
+					c = 0
+					r = r+1
+			movesarr[movind][1] = best_num
+			place_cube(0,best_num+1)
+			update_grid(grid)
+			if(is_win(grid) == 0):
+				movind+=1
+		else:
+			print("Tie game! Reward values untouched")
+			break
+	else:
+		if is_win(grid) == 1:
+			print("Good job! Increasing reward values")
+			for i in range(movind):
+				qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 0.5
+				if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 1
+				print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
+		else:
+			print("You suck! Decreasing reward values")
+			for i in range(movind):
+				qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.5
+				if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 1
+				print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
+		break
 
 #---------------------------------------------------------------------------
 
