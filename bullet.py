@@ -328,81 +328,100 @@ step 4: pick an action based on greedy alg + which spaces are open
 step 5: repeat until the game ends, then update the reward values based on if it won or lost
 step 6: rinse and repeat baby, ggez
 '''
-
 gridarr = [None]
-movesarr = np.zeros((4, 2))
-index = -1
-movind = 0
-while(1):
-	if is_win(grid)==0:
-		if is_full(grid) == 0:
-			while(1):
-				r = np.random.randint(0,3)
-				c = np.random.randint(0,3)
-				if grid[r, c] == 0:
-					print(r, c)
-					place_cube(1, (3*r+(c+1)))
-					update_grid(grid)
-					break
+for counter in range(50):
+	movesarr = np.zeros((4, 2))
+	index = -1
+	movind = 0
+	while(1):
+		if is_win(grid)==0:
+			if is_full(grid) == 0:
+				while(1):
+					r = np.random.randint(0,3)
+					c = np.random.randint(0,3)
+					if grid[r, c] == 0:
+						#print(r, c)
+						place_cube(1, (3*r+(c+1)))
+						update_grid(grid)
+						break
+			else:
+				print("Tie game! Reward values untouched")
+				break
 		else:
-			print("Tie game! Reward values untouched")
+			if is_win(grid) == 1:
+				print("Good job! Increasing reward values")
+				for i in range(movind):
+					qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 0.5
+					if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 1
+					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
+			else:
+				print("You suck! Decreasing reward values")
+				for i in range(movind):
+					qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.5
+					if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 1
+					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
 			break
-	else:
-		if is_win(grid) == 1:
-			print("Good job! Increasing reward values")
-			for i in range(movind):
-				qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 0.5
-				if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 1
-				print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
-		else:
-			print("You suck! Decreasing reward values")
-			for i in range(movind):
-				qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.5
-				if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 1
-				print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
-		break
-	if gridstr not in gridarr: 
-		gridarr.append(gridstr)
-	index = gridarr.index(gridstr)
-	movesarr[movind][0] = index
-	if is_win(grid)==0:
-		if is_full(grid) == 0:
-			best_move = 0
-			best_num = 0
-			r = 0
-			c = 0
-			for i in range(9):
-				#print(r, c)
-				if qtable[index][i] > best_move and grid[r, c] == 0:
-					best_move = qtable[index][i]
-					best_num = i
-				if (c < 2):
-					c = c+1
-				else:
-					c = 0
-					r = r+1
-			movesarr[movind][1] = best_num
-			place_cube(0,best_num+1)
-			update_grid(grid)
-			if(is_win(grid) == 0):
+		if is_win(grid)==0:
+			if is_full(grid) == 0:
+				if gridstr not in gridarr: 
+					gridarr.append(gridstr)
+				index = gridarr.index(gridstr)
+				movesarr[movind][0] = index
+				best_move = 0
+				best_num = 0
+				r = 0
+				c = 0
+				for i in range(9):
+					#print(r, c)
+					if qtable[index][i] > best_move and grid[r, c] == 0:
+						best_move = qtable[index][i]
+						best_num = i
+					if (c < 2):
+						c = c+1
+					else:
+						c = 0
+						r = r+1
+				movesarr[movind][1] = best_num
+				place_cube(0,best_num+1)
+				update_grid(grid)
 				movind+=1
+			else:
+				print("Tie game! Reward values untouched")
+				break
 		else:
-			print("Tie game! Reward values untouched")
+			#if movind == 4: movind -= 1
+			if is_win(grid) == 1:
+				print("Good job! Increasing reward values")
+				for i in range(movind):
+					qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 0.5
+					if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 1
+					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
+			else:
+				print("You suck! Decreasing reward values")
+				for i in range(movind):
+					qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.5
+					if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 1
+					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
 			break
-	else:
-		if is_win(grid) == 1:
-			print("Good job! Increasing reward values")
-			for i in range(movind):
-				qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 0.5
-				if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 1
-				print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
-		else:
-			print("You suck! Decreasing reward values")
-			for i in range(movind):
-				qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.5
-				if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 1
-				print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
-		break
+
+	p.resetSimulation()
+	#physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
+	p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
+	grid = np.zeros((3, 3))
+
+	# Load models
+	load_cubes()
+	planeId = p.loadURDF("plane.urdf")
+	table_a = p.loadURDF("table/table.urdf",[0,0,0])
+	table_b = p.loadURDF("tic_tac_toe_board/table_square.urdf",[0,0.005,0])
+	tray_a = p.loadURDF("tray/traybox.urdf",[0.62,0.65,0.67])
+	tray_b = p.loadURDF("tray/traybox.urdf",[-0.62,-0.68,0.67])
+	arm_a = p.loadURDF("franka_panda/panda.urdf",[-0.55,0,0.65], p.getQuaternionFromEuler([0,0,0]), useFixedBase=1)
+	arm_b  = p.loadURDF("franka_panda/panda.urdf",[0.548,-0.07,0.65], p.getQuaternionFromEuler([0,0,3]), useFixedBase=1)
+	p.setGravity(0,0,-9.81)
+	p.setRealTimeSimulation(0)
+	resetPos(arm_a)
+	resetPos(arm_b)
 
 #---------------------------------------------------------------------------
 
