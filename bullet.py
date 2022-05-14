@@ -46,7 +46,7 @@ boxes = [[0.51, 0, 0,-2.8, 0, 2.8, 1.1],    # Box 1
         [-0.24, 1.1, 0,-0.9, 0, 2.0, 0.5]]  # Box 9
 
 quick = 60
-slow = 90
+slow = 80
 x_picked = 0
 o_picked = 0
 
@@ -61,12 +61,12 @@ def stepSim(steps):
 def grab(arm):
     p.setJointMotorControl2(arm, 10, p.POSITION_CONTROL,targetPosition=0.0185, force=60)
     p.setJointMotorControl2(arm, 9, p.POSITION_CONTROL,targetPosition=0.0185, force=60)
-    stepSim(quick)
+    stepSim(50)
 
 def release(arm):
     p.setJointMotorControl2(arm, 10, p.POSITION_CONTROL,targetPosition=1.5)
     p.setJointMotorControl2(arm, 9, p.POSITION_CONTROL,targetPosition=1.5)
-    stepSim(quick)
+    stepSim(50)
 
 def resetPos(arm):
     startingPos = [-1.5, 1, 0, -0.8, 0, 1.8,0.8, 0, 0, 1, 1]
@@ -87,7 +87,7 @@ def load_cubes():
 
     for i in range(5):
         x_cube[i] = p.loadURDF("cube_small.urdf",[-0.49,-0.54 - incr,0.73])
-        o_cube[i] = p.loadURDF("cube_small.urdf",[0.59,0.465 + incr,0.73])
+        o_cube[i] = p.loadURDF("cube_small.urdf",[0.592,0.47 + incr,0.73])
         incr += 0.07
         p.changeVisualShape(o_cube[i], -1, textureUniqueId=o_text)
         p.changeVisualShape(x_cube[i], -1, textureUniqueId=x_text)
@@ -99,12 +99,14 @@ def pick_up_cube(sign):
 
     # Sign 0 for X and 1 for O
     if sign == 0:
-        move_arm(arm_a, cubes[x_picked%5], quick)
+        p.setJointMotorControlArray(arm_a, range(7), p.POSITION_CONTROL,targetPositions=cubes[x_picked%5])
+        stepSim(quick)
         grab(arm_a)
         move_arm(arm_a, pickedUp, slow)
         x_picked += 1
     else:
-        move_arm(arm_b, cubes[o_picked%5], quick)
+        p.setJointMotorControlArray(arm_b, range(7), p.POSITION_CONTROL,targetPositions=cubes[o_picked%5])
+        stepSim(quick)
         grab(arm_b)
         move_arm(arm_b, pickedUp, slow)
         o_picked += 1
@@ -215,7 +217,7 @@ def update_grid(grid):
     print(grid)
     return grid
 
-#check if the current state is a winning state
+# Check if the current state is a winning state
 def is_win(grid):
 	for i in range(3):
 		if sum(grid[i, :]) == 3:
@@ -233,13 +235,21 @@ def is_win(grid):
 		return -1
 	return 0
 
-#checks if the grid is full
+# Checks if the grid is full
 def is_full(grid):
 	for r in range(3):
 		for c in range(3):
 			if(grid[r, c] == 0):
 				return 0
 	return 1
+
+# Reset simulation and reset arm position
+def reset_simulation():
+    global x_picked
+    global o_picked
+    x_picked = 0
+    o_picked = 0
+    p.resetSimulation()
 
 # Main ---------------------------------------------------------------------
 physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
@@ -251,9 +261,9 @@ load_cubes()
 planeId = p.loadURDF("plane.urdf")
 table_a = p.loadURDF("table/table.urdf",[0,0,0])
 table_b = p.loadURDF("tic_tac_toe_board/table_square.urdf",[0,0.005,0])
-tray_a = p.loadURDF("tray/traybox.urdf",[0.62,0.65,0.67])
-tray_b = p.loadURDF("tray/traybox.urdf",[-0.62,-0.68,0.67])
-arm_a = p.loadURDF("franka_panda/panda.urdf",[-0.55,0,0.65], p.getQuaternionFromEuler([0,0,0]), useFixedBase=1)
+tray_a = p.loadURDF("tray/traybox.urdf",[-0.62,-0.68,0.68]) # Red
+tray_b = p.loadURDF("tray/traybox.urdf",[0.64,0.64,0.68])
+arm_a = p.loadURDF("franka_panda/panda.urdf",[-0.55,0,0.65], p.getQuaternionFromEuler([0,0,0]), useFixedBase=1) # Red
 arm_b  = p.loadURDF("franka_panda/panda.urdf",[0.548,-0.07,0.65], p.getQuaternionFromEuler([0,0,3]), useFixedBase=1)
 
 # Set physics
@@ -404,7 +414,7 @@ for counter in range(50):
 					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
 			break
 
-	p.resetSimulation()
+	reset_simulation()
 	#physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
 	p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 	grid = np.zeros((3, 3))
