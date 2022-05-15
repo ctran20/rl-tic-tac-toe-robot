@@ -355,27 +355,33 @@ for counter in range(50):
 						update_grid(grid)
 						break
 			else:
-				print("Tie game! Reward values untouched")
+				print("Tie game! Reward values slightly reduced")
+				for i in range(movind):
+					qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.25
+					#if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 1
+					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
 				break
 		else:
 			if is_win(grid) == 1:
 				print("Good job! Increasing reward values")
 				for i in range(movind):
-					qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 0.5
 					if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 1
+					else: qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 0.5
 					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
 			else:
 				print("You suck! Decreasing reward values")
 				for i in range(movind):
-					qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.5
 					if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 1
+					else: qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.5
 					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
 			break
+		gridstr = str(grid)
 		if is_win(grid)==0:
 			if is_full(grid) == 0:
 				if gridstr not in gridarr: 
 					gridarr.append(gridstr)
 				index = gridarr.index(gridstr)
+				print(index)
 				movesarr[movind][0] = index
 				best_move = 0
 				best_num = 0
@@ -396,21 +402,25 @@ for counter in range(50):
 				update_grid(grid)
 				movind+=1
 			else:
-				print("Tie game! Reward values untouched")
+				print("Tie game! Reward values slightly reduced")
+				for i in range(movind):
+					qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.25
+					#if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 1
+					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
 				break
 		else:
 			#if movind == 4: movind -= 1
 			if is_win(grid) == 1:
 				print("Good job! Increasing reward values")
 				for i in range(movind):
-					qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 0.5
 					if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 1
+					else: qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 0.5
 					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
 			else:
 				print("You suck! Decreasing reward values")
 				for i in range(movind):
-					qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.5
 					if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 1
+					else: qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.5
 					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
 			break
 
