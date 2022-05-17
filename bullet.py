@@ -250,6 +250,29 @@ def reset_simulation():
     x_picked = 0
     o_picked = 0
     p.resetSimulation()
+	
+
+# Function for a tie game, slightly reduces the reward values and displays them
+def tie_game():
+	print("Tie game! Reward values slightly reduced")
+	for i in range(movind):
+		qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.25
+		print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
+
+# Checks if the robot won or lost and updates the rewards accordingly/displays them
+def win_lose(grid):
+	if is_win(grid) == 1:
+		print("You win! Increasing reward values")
+		for i in range(movind):
+			if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 1
+			else: qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 0.5
+			print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
+	else:
+		print("You lose! Decreasing reward values")
+		for i in range(movind):
+			if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 1
+			else: qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.5
+			print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
 
 # Main ---------------------------------------------------------------------
 physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
@@ -261,44 +284,20 @@ load_cubes()
 planeId = p.loadURDF("plane.urdf")
 table_a = p.loadURDF("table/table.urdf",[0,0,0])
 table_b = p.loadURDF("tic_tac_toe_board/table_square.urdf",[0,0.005,0])
-tray_a = p.loadURDF("tray/traybox.urdf",[-0.62,-0.68,0.68]) # Red
-tray_b = p.loadURDF("tray/traybox.urdf",[0.64,0.64,0.68])
-arm_a = p.loadURDF("franka_panda/panda.urdf",[-0.55,0,0.65], p.getQuaternionFromEuler([0,0,0]), useFixedBase=1) # Red
+tray_a = p.loadURDF("tray/traybox.urdf",[0.62,0.65,0.67])
+tray_b = p.loadURDF("tray/traybox.urdf",[-0.62,-0.68,0.67])
+arm_a = p.loadURDF("franka_panda/panda.urdf",[-0.55,0,0.65], p.getQuaternionFromEuler([0,0,0]), useFixedBase=1)
 arm_b  = p.loadURDF("franka_panda/panda.urdf",[0.548,-0.07,0.65], p.getQuaternionFromEuler([0,0,3]), useFixedBase=1)
-
-# Set physics
 p.setGravity(0,0,-9.81)
 p.setRealTimeSimulation(0)
-
-# Controlling Arm ----------------------------------------------------------
 resetPos(arm_a)
 resetPos(arm_b)
-
-#place_cube(1,1)
-#update_grid(grid)
-#place_cube(0,2)
-#update_grid(grid)
-#place_cube(1,3)
-#update_grid(grid)
-#place_cube(0,5)
-#update_grid(grid)
-#place_cube(1,8)
-#update_grid(grid)
-#place_cube(0,9)
-#update_grid(grid)
-#place_cube(1,7)
-#update_grid(grid)
-
-# --------------------------------------------------------------------------
-
-#cubePos, cubeOrn = p.getBasePositionAndOrientation(arm_a)
-#print(cubePos,cubeOrn)
 
 #---------------------------------------------------------------------------
 #The fun part
 #Step 1: establish action state pairs
 
-#States = I googled it because i'm lazy
+#States = the total possible states that a tic tac toe game can exist in (according to google)
 States = 5478
 
 #Actions = The actions represent the 9 different spaces a block can be dropped
@@ -307,43 +306,21 @@ Actions = 9
 
 #Now that that's established we can set up the Q-table
 qtable = np.random.rand(States, Actions).tolist()
+#Which is a randomized set of reward values for all possible action state pairs
 
-#We can set up the robot to act greedily most of the time, but sometimes do something random just to see what happens
-#This is done using an epsilon value
-epsilon = 0.08
+#number of epochs for the training phase
+epochs = 50
 
-'''
-So here's what happens now. We run the robot through a bunch of different games, and assign reward values to
-the states based on whether the robot wins or loses. Let's say for example the robot does move X in state Y and
-that causes it to lose the game, the algorithm lowers the reward score of that state. We can lower the scores more
-for example if the robot does something that immediately loses them the game, versus their first move which doesn't
-matter as much. The opposite happens when the robot does a move that wins them the game. That way the table can be
-constantly updated every time it plays so the robot gets better every game.
+#Main learning code
 
-Challenges: how to establish and distinguish the states, how to tell what the winning states or losing states are,
-whether or not to have the opponent act randomly during training or allow user influence (random probably better),
-and how to explain during the presentation that this is actually useful.
-'''
-
-gridstr = str(grid)
-print(gridstr)
-
-'''
-OK LISTEN THE FUCK UP FUTURE CHARLIE, WE GOT THIS IN THE FUCKIN BAG NOW ALL WE GOTTA DO IS WRITE THE SHIT
-so heres the fuckin plan
-step 1: get the current state as a STRING (SIDE NOTE IM A FUCKING GENIUS)
-step 2: check if that string is in the array of established states
-step 3: if it isn't, add it to the array and the index of that state corresponds to the index in the SA array
-step 4: pick an action based on greedy alg + which spaces are open
-step 5: repeat until the game ends, then update the reward values based on if it won or lost
-step 6: rinse and repeat baby, ggez
-'''
 gridarr = [None]
-for counter in range(50):
+for counter in range(epochs):
+	#Save the action state pairs so they can be raised/lowered at the end of the game
 	movesarr = np.zeros((4, 2))
 	index = -1
 	movind = 0
 	while(1):
+		#Start by having the dummy robot move to a random open square, then check if it was a winning move or a tie
 		if is_win(grid)==0:
 			if is_full(grid) == 0:
 				while(1):
@@ -355,38 +332,26 @@ for counter in range(50):
 						update_grid(grid)
 						break
 			else:
-				print("Tie game! Reward values slightly reduced")
-				for i in range(movind):
-					qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.25
-					#if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 1
-					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
+				tie_game()
 				break
 		else:
-			if is_win(grid) == 1:
-				print("Good job! Increasing reward values")
-				for i in range(movind):
-					if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 1
-					else: qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 0.5
-					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
-			else:
-				print("You suck! Decreasing reward values")
-				for i in range(movind):
-					if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 1
-					else: qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.5
-					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
+			win_lose(grid)
 			break
+		#Read in the current state of the grid as a state
 		gridstr = str(grid)
 		if is_win(grid)==0:
 			if is_full(grid) == 0:
+				#Put that state in the array of known states if it isn't already there
 				if gridstr not in gridarr: 
 					gridarr.append(gridstr)
 				index = gridarr.index(gridstr)
-				print(index)
+				#print(index)
 				movesarr[movind][0] = index
 				best_move = 0
 				best_num = 0
 				r = 0
 				c = 0
+				#Find the action with the highest reward value for that state
 				for i in range(9):
 					#print(r, c)
 					if qtable[index][i] > best_move and grid[r, c] == 0:
@@ -401,31 +366,15 @@ for counter in range(50):
 				place_cube(0,best_num+1)
 				update_grid(grid)
 				movind+=1
+			#Check if the game was a win or a tie and update the reward values accordingly
 			else:
-				print("Tie game! Reward values slightly reduced")
-				for i in range(movind):
-					qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.25
-					#if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 1
-					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
+				tie_game()
 				break
 		else:
-			#if movind == 4: movind -= 1
-			if is_win(grid) == 1:
-				print("Good job! Increasing reward values")
-				for i in range(movind):
-					if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 1
-					else: qtable[int(movesarr[i][0])][int(movesarr[i][1])] += 0.5
-					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
-			else:
-				print("You suck! Decreasing reward values")
-				for i in range(movind):
-					if(i == movind-1): qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 1
-					else: qtable[int(movesarr[i][0])][int(movesarr[i][1])] -= 0.5
-					print(qtable[int(movesarr[i][0])][int(movesarr[i][1])])
+			win_lose(grid)
 			break
-
+	#Reset the simulation and run the game again
 	reset_simulation()
-	#physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
 	p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 	grid = np.zeros((3, 3))
 
